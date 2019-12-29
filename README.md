@@ -14,5 +14,6 @@ All users no matter the device will randomize these 5 easy puzzles for the date
 December 29, 2019 giving us an elegant solution to offering the user daily content without
 having to connect to the internet. 
 
-thanks and have fun
+Thanks and Have Fun
+
 Cody Brunty
