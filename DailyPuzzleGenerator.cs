@@ -17,16 +17,10 @@ public class DailyPuzzleGenerator : MonoBehaviour {
     }
 
     private void GetDailyPuzzlesFromGameData() {
-        DailyPuzzle_easyLevels = GameDataControl.gdControl.daily_easyLevel_Indexes;
-        DailyPuzzle_hardLevels = GameDataControl.gdControl.daily_hardLevel_Indexes;
-    }
-
-    //User switches apps. When our app regains focus we run the day/time check incase its a different day
-    void OnApplicationFocus(bool hasFocus) {
-        if (hasFocus && checkDateCounter > 0) {
-            Debug.LogWarning("Has Focus, Checking Daily Puzzle Date.");
-            NewDayCheck();
-        }
+        //List<int> { 1, 2, 3, 4, 5 }
+        DailyPuzzle_easyLevels = GameDataController.gdControl.dailyPuzzle_easyLevels;
+        //List<int> { 1, 2, 3, 4, 5 }
+        DailyPuzzle_hardLevels = GameDataController.gdControl.dailyPuzzle_hardLevels;
     }
 
     private void NewDayCheck() {
@@ -40,13 +34,17 @@ public class DailyPuzzleGenerator : MonoBehaviour {
 
     private IEnumerator CheckDate() {
         Debug.Log("Getting The Date For Daily Puzzles.");
+        //Calls my TimeManager script retrieving the correct date
+        //This can also be using unity built in DateTime.Now;
         yield return StartCoroutine(TimeManager.sharedInstance.getTime());
-        int date = TimeManager.sharedInstance.getCurrentDateNow();
+        //january 2, 1988 = 01021988 or MMddyyyy
+        int date = TimeManager.sharedInstance.getCurrentDateNow(); 
 
-        //we are using the date as our randomSeedNumber if they dont match then its a new day
+        //The date is our randomSeedNumber, if these numbers dont match then it must be a new day
         if (randomSeedNumber != date) {
             Debug.Log("Get new DailyPuzzles with new seed number");
             randomSeedNumber = date;
+            //Save our seed number for next time user opens app
             PlayerPrefs.SetInt("dailySeedNumber", randomSeedNumber);
             SelectRandomDailyPuzzles(randomSeedNumber);
             GetDailyPuzzlesFromGameData();
@@ -60,15 +58,16 @@ public class DailyPuzzleGenerator : MonoBehaviour {
     private void SelectRandomDailyPuzzles(int seed) {
         int easyLevelsNeeded = DailyPuzzle_easyLevels.Count;
         int hardLevelsNeeded = DailyPuzzle_hardLevels.Count;
+        
+        //Clearing our list of puzzles numbers so they are ready to randomize some new puzzle numbers
         DailyPuzzle_easyLevels.Clear();
         DailyPuzzle_hardLevels.Clear();
 
-        //Set the randomSeedNumber so all devices randomize the same daily puzzles.
+        //Set the randomSeedNumber so all devices randomize the same daily puzzles for each day.
         UnityEngine.Random.InitState(seed);
         for (int i = 0; i < easyLevelsNeeded; i++) {
             int randomLevel = UnityEngine.Random.Range(0, totalNumberEasyPuzzles);
-
-            //add this if so we dont get the same puzzle twice
+            //So we dont get the same puzzle twice on one day
             if (!DailyPuzzle_easyLevels.Contains(randomLevel)) {
                 DailyPuzzle_easyLevels.Add(randomLevel);
             }
@@ -76,7 +75,6 @@ public class DailyPuzzleGenerator : MonoBehaviour {
                 easyLevelsNeeded++;
             }
         }
-
         for (int i = 0; i < hardLevelsNeeded; i++) {
             int randomLevel = UnityEngine.Random.Range(0, totalNumberEasyPuzzles);
             if (!DailyPuzzle_hardLevels.Contains(randomLevel)) {
@@ -86,21 +84,29 @@ public class DailyPuzzleGenerator : MonoBehaviour {
                 hardLevelsNeeded++;
             }
         }
-
+        //Now we have 2 new randomized lists
         ResetRandomSeed();
-        SetGameDataWithNewPuzzles();
+        SaveNewDailyPuzzleGameData();
     }
 
     private void ResetRandomSeed() {
         UnityEngine.Random.InitState(System.Environment.TickCount);
     }
 
-    private void SetGameDataWithNewPuzzles() {
-        GameDataControl.gdControl.hardUnlocked = false;
-        GameDataControl.gdControl.daily_level_results = new List<int> { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        GameDataControl.gdControl.daily_easyLevel_Indexes = DailyPuzzle_easyLevels;
-        GameDataControl.gdControl.daily_hardLevel_Indexes = DailyPuzzle_hardLevels;
-        GameDataControl.gdControl.SavePlayerData();
+    private void SaveNewDailyPuzzleGameData() {
+        GameDataController.gdControl.hardUnlocked = false;
+        GameDataController.gdControl.daily_level_results = new List<int> { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        GameDataController.gdControl.dailyPuzzle_easyLevels = DailyPuzzle_easyLevels;
+        GameDataController.gdControl.dailyPuzzle_hardLevels = DailyPuzzle_hardLevels;
+        GameDataController.gdControl.SavePlayerData();
     }
 
+    //User switches apps. When our app regains focus we run the day/time check incase its a different day
+    void OnApplicationFocus(bool hasFocus) {
+        if (hasFocus && checkDateCounter > 0) {
+            Debug.LogWarning("Has Focus, Checking Daily Puzzle Date.");
+            NewDayCheck();
+        }
+    }
+    
 )
